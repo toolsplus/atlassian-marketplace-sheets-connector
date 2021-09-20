@@ -1,0 +1,14 @@
+logs
+target
+/.idea
+/.idea_modules
+/.classpath
+/.project
+/.settings
+node_modules/
+*.log
+*.iml
+.DS_Store
+.history
+dist/
+.clasp.json
