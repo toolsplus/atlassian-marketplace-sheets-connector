@@ -4,6 +4,7 @@ const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 const GasPlugin = require("gas-webpack-plugin");
+const ESLintPlugin = require('eslint-webpack-plugin');
 
 const destination = path.resolve(__dirname, "dist");
 const isProduction = process.env.NODE_ENV === "production";
@@ -47,17 +48,6 @@ module.exports = {
   module: {
     rules: [
       {
-        enforce: "pre",
-        test: /\.ts$/,
-        exclude: /node_modules/,
-        loader: "eslint-loader",
-        options: {
-          cache: true,
-          failOnError: false,
-          fix: true,
-        },
-      },
-      {
         test: /\.ts$/,
         exclude: /node_modules/,
         use: {
@@ -67,6 +57,7 @@ module.exports = {
     ],
   },
   plugins: [
+    new ESLintPlugin(),
     new ForkTsCheckerWebpackPlugin(),
     new CleanWebpackPlugin(),
     new CopyWebpackPlugin({
