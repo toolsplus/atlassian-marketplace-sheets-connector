@@ -5,12 +5,15 @@ performance, licensing data or, conversion events.
 
 🗄️️ Available datasets:
 
-* [Transactions](https://developer.atlassian.com/platform/marketplace/rest/api-group-reporting/#api-vendors-vendorid-reporting-sales-transactions-export-get)
-* [Licenses](https://developer.atlassian.com/platform/marketplace/rest/api-group-reporting/#api-vendors-vendorid-reporting-licenses-export-get)
-* [Feedback](https://developer.atlassian.com/platform/marketplace/rest/api-group-reporting/#api-vendors-vendorid-reporting-feedback-details-export-get)
+* [Transactions](https://developer.atlassian.com/platform/marketplace/rest/v2/api-group-reporting/#api-vendors-vendorid-reporting-sales-transactions-export-get)
+* [Licenses](https://developer.atlassian.com/platform/marketplace/rest/v2/api-group-reporting/#api-vendors-vendorid-reporting-licenses-export-get)
+* [Feedback](https://developer.atlassian.com/platform/marketplace/rest/v2/api-group-reporting/#api-vendors-vendorid-reporting-feedback-details-export-get)
 * [Churn events](https://developer.atlassian.com/platform/marketplace/rest/api-group-reporting/#api-vendors-vendorid-reporting-sales-metrics-salemetric-details-export-get)
 * [Conversion events](https://developer.atlassian.com/platform/marketplace/rest/api-group-reporting/#api-vendors-vendorid-reporting-sales-metrics-salemetric-details-export-get)
 * [Renewal events](https://developer.atlassian.com/platform/marketplace/rest/api-group-reporting/#api-vendors-vendorid-reporting-sales-metrics-salemetric-details-export-get)
+* [Evaluation benchmark](https://developer.atlassian.com/platform/marketplace/rest/v2/api-group-reporting/#api-vendors-vendorid-reporting-benchmark-evaluations-get)
+* [Sales benchmark](https://developer.atlassian.com/platform/marketplace/rest/v2/api-group-reporting/#api-vendors-vendorid-reporting-benchmark-sales-get)
+* [Churn benchmark](https://developer.atlassian.com/platform/marketplace/rest/v2/api-group-reporting/#api-vendors-vendorid-reporting-sales-metrics-churn-benchmark-get)
 
 ## Get started
 
