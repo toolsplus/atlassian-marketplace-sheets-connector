@@ -1,25 +1,8 @@
 import { Credentials, Login } from "./LoginService";
+import { CsvDatasetDescriptor, JsonDatasetDescriptor } from "./datasets";
 
 const API_BASE_URL = "https://marketplace.atlassian.com";
 const GET_VENDORS_ENDPOINT = "/rest/2/vendors";
-
-const datasetEndpoints = (vendorId: string): Record<string, string> => ({
-  transactions: `/rest/2/vendors/${vendorId}/reporting/sales/transactions/export`,
-  licenses: `/rest/2/vendors/${vendorId}/reporting/licenses/export`,
-  feedback: `/rest/2/vendors/${vendorId}/reporting/feedback/details/export`,
-  cloudLicenseChurns: `/rest/2/vendors/${vendorId}/reporting/sales/metrics/churn/details/export`,
-  cloudLicenseRenewals: `/rest/2/vendors/${vendorId}/reporting/sales/metrics/renewal/details/export`,
-  cloudLicenseConversions: `/rest/2/vendors/${vendorId}/reporting/sales/metrics/conversion/details/export`,
-});
-
-export const datasetKeys = [
-  "transactions",
-  "licenses",
-  "feedback",
-  "cloudLicenseChurns",
-  "cloudLicenseRenewals",
-  "cloudLicenseConversions",
-];
 
 const fetchData = (relativeApiEndpoint: string, extraParams: Record<string, string> = {}) => (
   credentials: Credentials
@@ -55,7 +38,10 @@ export const getFirstVendorId = (credentials: Credentials): string | null => {
   }
 };
 
-export const loadDataset = (datasetKey: string, login: Login): string[][] | undefined => {
+export const loadCsvDataset = (
+  dataset: CsvDatasetDescriptor,
+  login: Login
+): string[][] | undefined => {
   const parseCsv = (csvRawData: string) => {
     // Fix the bug on Utilities.parseCsv() google script function which does not allow newlines in csv strings
     // https://gist.github.com/simonjamain/7e23b898527655609e5ff012f412dd50
@@ -69,6 +55,24 @@ export const loadDataset = (datasetKey: string, login: Login): string[][] | unde
     }
   };
 
-  const response = fetchData(datasetEndpoints(login.vendorId)[datasetKey])(login);
+  const response = fetchData(dataset.apiEndpoint(login.vendorId))(login);
   return parseCsv(response.getContentText());
+};
+
+export const loadJsonDatasetAsCsv = (
+  dataset: JsonDatasetDescriptor,
+  login: Login
+): string[][] | undefined => {
+  const transformJsonToCsv = (jsonRawData: unknown) => {
+    try {
+      return dataset.dataTransformer(jsonRawData);
+    } catch (exception) {
+      Logger.log(`Failed to transform JSON raw data to CSV: ${exception}`, {
+        exception,
+        jsonRawData,
+      });
+    }
+  };
+  const response = fetchData(dataset.apiEndpoint(login.vendorId))(login);
+  return transformJsonToCsv(JSON.parse(response.getContentText()));
 };

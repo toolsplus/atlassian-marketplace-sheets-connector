@@ -1,4 +1,4 @@
-import { datasetKeys, getFirstVendorId, loadDataset } from "./MarketplaceService";
+import { getFirstVendorId, loadCsvDataset, loadJsonDatasetAsCsv } from "./MarketplaceService";
 import {
   Credentials,
   getLogin,
@@ -7,14 +7,22 @@ import {
   logInUser,
   logoutUser,
 } from "./LoginService";
+import { DatasetDescriptor, DatasetKey, datasets } from "./datasets";
 
 const onOpen = (): void => {
   const ui = SpreadsheetApp.getUi();
   const isLoggedIn = isUserLoggedIn();
 
   if (isLoggedIn) {
+    const singleDatasetLoaderMenu = ui.createMenu("Load single dataset");
+    for (const dataset of datasets) {
+      singleDatasetLoaderMenu.addItem(dataset.key, `load${dataset.key}`);
+    }
+
     ui.createAddonMenu()
-      .addItem("Load datasets", "loadDatasets")
+      .addItem("Load all datasets", "loadDatasets")
+      .addSubMenu(singleDatasetLoaderMenu)
+      .addSeparator()
       .addItem("Logout", "logout")
       .addToUi();
   } else {
@@ -85,47 +93,97 @@ export const loadDatasets = (): void => {
   ui.prompt(result);
 };
 
-export const loadAllDatasets = (): string => {
-  const loadSingleDataset = (datasetKey: string, login: Login) => {
-    Logger.log(`Starting to load '${datasetKey}' dataset`);
-    const csvData = loadDataset(datasetKey, login);
+// Single dataset loaders
+// function name must match the UI menu configuration which is load{dataset.key}
+const loadDatasetByKey = (key: DatasetKey): void => {
+  const ui = SpreadsheetApp.getUi();
+  const result = loadDataset(key);
+  ui.prompt(result);
+};
+const loadtransactions = (): void => loadDatasetByKey("transactions");
+const loadlicenses = (): void => loadDatasetByKey("licenses");
+const loadfeedback = (): void => loadDatasetByKey("feedback");
+const loadcloudLicenseChurns = (): void => loadDatasetByKey("cloudLicenseChurns");
+const loadcloudLicenseRenewals = (): void => loadDatasetByKey("cloudLicenseRenewals");
+const loadcloudLicenseConversions = (): void => loadDatasetByKey("cloudLicenseConversions");
+const loadchurnBenchmark = (): void => loadDatasetByKey("churnBenchmark");
+const loadsalesBenchmark = (): void => loadDatasetByKey("salesBenchmark");
+const loadevaluationsBenchmark = (): void => loadDatasetByKey("evaluationsBenchmark");
 
-    if (csvData) {
-      const thisSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-      const maybeDatasetSheet = thisSpreadsheet.getSheetByName(datasetKey);
-      const datasetSheet = maybeDatasetSheet
-        ? maybeDatasetSheet
-        : thisSpreadsheet.insertSheet(datasetKey);
-      datasetSheet.getRange(1, 1, csvData.length, csvData[0].length).setValues(csvData);
-      Logger.log(`Loading of '${datasetKey}' complete`);
-    } else {
-      Logger.log(`Loading of '${datasetKey}' failed`);
-    }
-  };
+const loadSingleDataset = (dataset: DatasetDescriptor, login: Login) => {
+  Logger.log(`Starting to load '${dataset.key}' dataset`);
+  const csvData =
+    dataset.type === "csv" ? loadCsvDataset(dataset, login) : loadJsonDatasetAsCsv(dataset, login);
 
+  if (csvData) {
+    const thisSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const maybeDatasetSheet = thisSpreadsheet.getSheetByName(dataset.key);
+    const datasetSheet = maybeDatasetSheet
+      ? maybeDatasetSheet
+      : thisSpreadsheet.insertSheet(dataset.key);
+    datasetSheet.getRange(1, 1, csvData.length, csvData[0].length).setValues(csvData);
+    Logger.log(`Loading of '${dataset.key}' complete`);
+  } else {
+    Logger.log(`Loading of '${dataset.key}' failed`);
+  }
+};
+
+const loadDataset = (key: DatasetKey): string => {
   const login = getLogin();
 
   if (!login) {
     const message =
-      "Failed to load datasets because you are not logged in. Go to Add-ons > Atlassian Marketplace > Login to log in.";
+      "Failed to load dataset: You are not logged in. Go to Add-ons > Atlassian Marketplace > Login to log in.";
     Logger.log(message);
     return message;
   }
 
   if (!login.username || !login.apiToken || !login.vendorId) {
     const message =
-      "Failed to load datasets because username, password or vendorId is missing. Try to log out and log back in by going to to Add-ons > Atlassian Marketplace > Logout.";
+      "Failed to load dataset: Username, password or vendorId is missing. Try to log out and log back in by going to to Add-ons > Atlassian Marketplace > Logout.";
     Logger.log(message);
     return message;
   }
 
-  Logger.log(`Starting to load ${datasetKeys.length} datasets`);
+  const dataset = datasets.find((d) => d.key === key);
 
-  for (const datasetKey of datasetKeys) {
-    loadSingleDataset(datasetKey, login);
+  if (dataset) {
+    Logger.log(`Starting to load ${key} dataset`);
+    loadSingleDataset(dataset, login);
+    const successMessage = `Loading of ${key} dataset complete`;
+    Logger.log(successMessage);
+    return successMessage;
+  } else {
+    const datasetNotFoundMessage = `Failed to find dataset for key ${key}`;
+    Logger.log(datasetNotFoundMessage);
+    return datasetNotFoundMessage;
+  }
+};
+
+export const loadAllDatasets = (): string => {
+  const login = getLogin();
+
+  if (!login) {
+    const message =
+      "Failed to load datasets: You are not logged in. Go to Add-ons > Atlassian Marketplace > Login to log in.";
+    Logger.log(message);
+    return message;
   }
 
-  const successMessage = `Loading of ${datasetKeys.length} datasets complete`;
+  if (!login.username || !login.apiToken || !login.vendorId) {
+    const message =
+      "Failed to load datasets: Username, password or vendorId is missing. Try to log out and log back in by going to to Add-ons > Atlassian Marketplace > Logout.";
+    Logger.log(message);
+    return message;
+  }
+
+  Logger.log(`Starting to load ${datasets.length} datasets`);
+
+  for (const dataset of datasets) {
+    loadSingleDataset(dataset, login);
+  }
+
+  const successMessage = `Loading of ${datasets.length} datasets complete`;
   Logger.log(successMessage);
   return successMessage;
 };
@@ -136,6 +194,15 @@ interface CustomNodeJsGlobal extends NodeJS.Global {
   logout: () => void;
   loadDatasets: () => void;
   loadAllDatasets: () => string;
+  loadtransactions: () => void;
+  loadlicenses: () => void;
+  loadfeedback: () => void;
+  loadcloudLicenseChurns: () => void;
+  loadcloudLicenseRenewals: () => void;
+  loadcloudLicenseConversions: () => void;
+  loadchurnBenchmark: () => void;
+  loadsalesBenchmark: () => void;
+  loadevaluationsBenchmark: () => void;
 }
 
 declare const global: CustomNodeJsGlobal;
@@ -148,3 +215,12 @@ global.login = login;
 global.logout = logout;
 global.loadDatasets = loadDatasets;
 global.loadAllDatasets = loadAllDatasets;
+global.loadtransactions = loadtransactions;
+global.loadlicenses = loadlicenses;
+global.loadfeedback = loadfeedback;
+global.loadcloudLicenseChurns = loadcloudLicenseChurns;
+global.loadcloudLicenseRenewals = loadcloudLicenseRenewals;
+global.loadcloudLicenseConversions = loadcloudLicenseConversions;
+global.loadchurnBenchmark = loadchurnBenchmark;
+global.loadsalesBenchmark = loadsalesBenchmark;
+global.loadevaluationsBenchmark = loadevaluationsBenchmark;
