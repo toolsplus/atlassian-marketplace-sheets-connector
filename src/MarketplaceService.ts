@@ -4,26 +4,40 @@ import { CsvDatasetDescriptor, JsonDatasetDescriptor } from "./datasets";
 const API_BASE_URL = "https://marketplace.atlassian.com";
 const GET_VENDORS_ENDPOINT = "/rest/2/vendors";
 
-const fetchData = (relativeApiEndpoint: string, extraParams: Record<string, string> = {}) => (
+interface FetchOptions {
+  method: GoogleAppsScript.URL_Fetch.HttpMethod;
+  relativeApiEndpoint: string;
+  extraParams?: Record<string, string>;
+  payload?: GoogleAppsScript.URL_Fetch.Payload;
+}
+
+const fetchData = ({ method, relativeApiEndpoint, extraParams, payload }: FetchOptions) => (
   credentials: Credentials
 ) => {
-  const extraQueryParams = Object.entries(extraParams)
+  const extraQueryParams = Object.entries(extraParams || {})
     .map(([key, value]) => `${key}=${value}`)
     .join("&");
   const url = `${API_BASE_URL}${relativeApiEndpoint}?accept=csv&${extraQueryParams}`;
   const authPlain = `${credentials.username}:${credentials.apiToken}`;
   const authBase64 = Utilities.base64Encode(authPlain);
   const options = {
+    method,
     headers: {
       Authorization: `Basic ${authBase64}`,
+      ...(payload && { "Content-Type": "application/json" }),
     },
     muteHttpExceptions: true, // If true the fetch doesn't throw an exception if the response code indicates failure
+    payload: JSON.stringify(payload),
   };
   return UrlFetchApp.fetch(url, options);
 };
 
 export const getFirstVendorId = (credentials: Credentials): string | null => {
-  const response = fetchData(GET_VENDORS_ENDPOINT, { forThisUser: "true" })(credentials);
+  const response = fetchData({
+    method: "get",
+    relativeApiEndpoint: GET_VENDORS_ENDPOINT,
+    extraParams: { forThisUser: "true" },
+  })(credentials);
   const data = JSON.parse(response.getContentText());
   if (data && data.count > 0) {
     const firstVendor = data._embedded.vendors[0];
@@ -55,7 +69,11 @@ export const loadCsvDataset = (
     }
   };
 
-  const response = fetchData(dataset.apiEndpoint(login.vendorId))(login);
+  const response = fetchData({
+    method: dataset.apiEndpoint.method,
+    relativeApiEndpoint: dataset.apiEndpoint.url(login.vendorId),
+    payload: dataset.apiEndpoint.payload,
+  })(login);
   return parseCsv(response.getContentText());
 };
 
@@ -73,6 +91,10 @@ export const loadJsonDatasetAsCsv = (
       });
     }
   };
-  const response = fetchData(dataset.apiEndpoint(login.vendorId))(login);
+  const response = fetchData({
+    method: dataset.apiEndpoint.method,
+    relativeApiEndpoint: dataset.apiEndpoint.url(login.vendorId),
+    payload: dataset.apiEndpoint.payload,
+  })(login);
   return transformJsonToCsv(JSON.parse(response.getContentText()));
 };

@@ -109,19 +109,21 @@ const loadcloudLicenseConversions = (): void => loadDatasetByKey("cloudLicenseCo
 const loadchurnBenchmark = (): void => loadDatasetByKey("churnBenchmark");
 const loadsalesBenchmark = (): void => loadDatasetByKey("salesBenchmark");
 const loadevaluationsBenchmark = (): void => loadDatasetByKey("evaluationsBenchmark");
+const loadarrPartnerMetric = (): void => loadDatasetByKey("arrPartnerMetric");
+const loadmrrPartnerMetric = (): void => loadDatasetByKey("mrrPartnerMetric");
 
 const loadSingleDataset = (dataset: DatasetDescriptor, login: Login) => {
   Logger.log(`Starting to load '${dataset.key}' dataset`);
-  const csvData =
+  const data =
     dataset.type === "csv" ? loadCsvDataset(dataset, login) : loadJsonDatasetAsCsv(dataset, login);
 
-  if (csvData) {
+  if (data) {
     const thisSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     const maybeDatasetSheet = thisSpreadsheet.getSheetByName(dataset.key);
     const datasetSheet = maybeDatasetSheet
       ? maybeDatasetSheet
       : thisSpreadsheet.insertSheet(dataset.key);
-    datasetSheet.getRange(1, 1, csvData.length, csvData[0].length).setValues(csvData);
+    datasetSheet.getRange(1, 1, data.length, data[0].length).setValues(data);
     Logger.log(`Loading of '${dataset.key}' complete`);
   } else {
     Logger.log(`Loading of '${dataset.key}' failed`);
@@ -203,6 +205,8 @@ interface CustomNodeJsGlobal extends NodeJS.Global {
   loadchurnBenchmark: () => void;
   loadsalesBenchmark: () => void;
   loadevaluationsBenchmark: () => void;
+  loadarrPartnerMetric: () => void;
+  loadmrrPartnerMetric: () => void;
 }
 
 declare const global: CustomNodeJsGlobal;
@@ -224,3 +228,5 @@ global.loadcloudLicenseConversions = loadcloudLicenseConversions;
 global.loadchurnBenchmark = loadchurnBenchmark;
 global.loadsalesBenchmark = loadsalesBenchmark;
 global.loadevaluationsBenchmark = loadevaluationsBenchmark;
+global.loadarrPartnerMetric = loadarrPartnerMetric;
+global.loadmrrPartnerMetric = loadmrrPartnerMetric;

@@ -14,6 +14,8 @@ performance, licensing data or, conversion events.
 * [Evaluation benchmark](https://developer.atlassian.com/platform/marketplace/rest/v2/api-group-reporting/#api-vendors-vendorid-reporting-benchmark-evaluations-get)
 * [Sales benchmark](https://developer.atlassian.com/platform/marketplace/rest/v2/api-group-reporting/#api-vendors-vendorid-reporting-benchmark-sales-get)
 * [Churn benchmark](https://developer.atlassian.com/platform/marketplace/rest/v2/api-group-reporting/#api-vendors-vendorid-reporting-sales-metrics-churn-benchmark-get)
+* [MRR](https://developer.atlassian.com/platform/marketplace/rest/v2/api-group-reporting/#api-vendors-vendorid-partner-metrics-post)
+* [ARR](https://developer.atlassian.com/platform/marketplace/rest/v2/api-group-reporting/#api-vendors-vendorid-partner-metrics-post)
 
 ## Get started
 
